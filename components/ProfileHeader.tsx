@@ -1,12 +1,11 @@
 import React from 'react';
 import { View, Image, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { MapPin, Settings } from 'lucide-react-native';
-import { User } from '@/data/mockUsers';
 import { formatNumber } from '@/utils/feedAlgorithm';
 import { useApp } from '@/context/AppContext';
 
 interface ProfileHeaderProps {
-  user: User;
+  user: any;
   isCurrentUser?: boolean;
 }
 

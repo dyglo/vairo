@@ -1,5 +1,34 @@
-import { Post } from '@/data/mockPosts';
-import { User, mockUsers, getUserById } from '@/data/mockUsers';
+// Feed algorithm utility functions
+
+export interface Post {
+  id: string;
+  user_id: string;
+  type: 'text' | 'image' | 'video';
+  caption: string;
+  media_url?: string;
+  likes: number;
+  comments: number;
+  shares: number;
+  created_at: string;
+  reach_score: number;
+}
+
+export interface User {
+  id: string;
+  name: string;
+  username: string;
+  avatar: string;
+  bio: string;
+  location: string;
+  occupation: string;
+  followers_count: number;
+  following_count: number;
+  posts_count: number;
+  likes_count: number;
+  visibility_score: number;
+  recent_impressions: number;
+  created_at: string;
+}
 
 interface RankedPost extends Post {
   ranking_score: number;
@@ -71,11 +100,11 @@ function calculateContentDiversity(post: Post, recentTypes: string[]): number {
   return diversityScore;
 }
 
-export function rankFeedPosts(posts: Post[]): Post[] {
+export function rankFeedPosts(posts: Post[], getUserById?: (id: string) => User | undefined): Post[] {
   const recentTypes: string[] = [];
 
   const rankedPosts: RankedPost[] = posts.map(post => {
-    const user = getUserById(post.user_id);
+    const user = getUserById?.(post.user_id);
 
     if (!user) {
       return { ...post, ranking_score: 0 };
@@ -104,17 +133,17 @@ export function rankFeedPosts(posts: Post[]): Post[] {
 
   rankedPosts.sort((a, b) => b.ranking_score - a.ranking_score);
 
-  return interleavePrioritySlots(rankedPosts);
+  return interleavePrioritySlots(rankedPosts, getUserById);
 }
 
-function interleavePrioritySlots(posts: RankedPost[]): Post[] {
+function interleavePrioritySlots(posts: RankedPost[], getUserById?: (id: string) => User | undefined): Post[] {
   const result: Post[] = [];
   const underexposedPosts = posts.filter(p => {
-    const user = getUserById(p.user_id);
+    const user = getUserById?.(p.user_id);
     return user && user.visibility_score < 30;
   });
   const regularPosts = posts.filter(p => {
-    const user = getUserById(p.user_id);
+    const user = getUserById?.(p.user_id);
     return user && user.visibility_score >= 30;
   });
 
@@ -137,10 +166,10 @@ function interleavePrioritySlots(posts: RankedPost[]): Post[] {
   return result;
 }
 
-export function rankStoryUsers(userIds: string[]): string[] {
+export function rankStoryUsers(userIds: string[], getUserById?: (id: string) => User | undefined): string[] {
   return [...userIds].sort((a, b) => {
-    const userA = getUserById(a);
-    const userB = getUserById(b);
+    const userA = getUserById?.(a);
+    const userB = getUserById?.(b);
 
     if (!userA || !userB) return 0;
 

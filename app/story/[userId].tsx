@@ -14,7 +14,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronUp, Heart, Send } from 'lucide-react-native';
 import { useApp } from '@/context/AppContext';
-import { getGroupedStories } from '@/data/mockStories';
 import { formatTimeAgo } from '@/utils/feedAlgorithm';
 
 const { width, height } = Dimensions.get('window');
@@ -26,7 +25,7 @@ export default function StoryViewerScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
   const { getUser, markStorySeen, isFollowing, toggleFollow } = useApp();
 
-  const groupedStories = getGroupedStories();
+  const groupedStories: any[] = [];
   const userStoryIndex = groupedStories.findIndex(g => g.user_id === userId);
   const [currentUserIndex, setCurrentUserIndex] = useState(userStoryIndex >= 0 ? userStoryIndex : 0);
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);

@@ -5,14 +5,13 @@ import { useApp } from '@/context/AppContext';
 import { ProfileHeader } from '@/components/ProfileHeader';
 import { ProfileTabs } from '@/components/ProfileTabs';
 import { MediaGrid } from '@/components/MediaGrid';
-import { getPostsByUserId } from '@/data/mockPosts';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { currentUser } = useApp();
   const [activeTab, setActiveTab] = useState<'posts' | 'saved' | 'videos'>('posts');
 
-  const userPosts = getPostsByUserId('current-user');
+  const userPosts: any[] = [];
   const mediaPosts = userPosts.filter(post => post.media_url);
   const videoPosts = userPosts.filter(post => post.type === 'video');
 

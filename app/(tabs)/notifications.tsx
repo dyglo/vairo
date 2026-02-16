@@ -14,19 +14,6 @@ interface Notification {
   timestamp: string;
 }
 
-const mockNotifications: Notification[] = [
-  { id: 'n1', type: 'like', userId: 'user-7', postId: 'post-1', timestamp: new Date(Date.now() - 10 * 60 * 1000).toISOString() },
-  { id: 'n2', type: 'follow', userId: 'user-10', timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString() },
-  { id: 'n3', type: 'comment', userId: 'user-3', postId: 'post-2', timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },
-  { id: 'n4', type: 'like', userId: 'user-8', postId: 'post-4', timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString() },
-  { id: 'n5', type: 'follow', userId: 'user-13', timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString() },
-  { id: 'n6', type: 'like', userId: 'user-4', postId: 'post-1', timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString() },
-  { id: 'n7', type: 'comment', userId: 'user-14', postId: 'post-16', timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString() },
-  { id: 'n8', type: 'follow', userId: 'user-6', timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() },
-  { id: 'n9', type: 'like', userId: 'user-9', postId: 'post-8', timestamp: new Date(Date.now() - 36 * 60 * 60 * 1000).toISOString() },
-  { id: 'n10', type: 'like', userId: 'user-11', postId: 'post-19', timestamp: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString() },
-];
-
 export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -105,7 +92,7 @@ export default function NotificationsScreen() {
         <Text style={styles.headerTitle}>Notifications</Text>
       </View>
       <FlatList
-        data={mockNotifications}
+        data={[]}
         keyExtractor={(item) => item.id}
         renderItem={renderNotification}
         showsVerticalScrollIndicator={false}

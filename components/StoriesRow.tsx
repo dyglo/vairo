@@ -3,14 +3,13 @@ import { View, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useApp } from '@/context/AppContext';
 import { StoryAvatar } from './StoryAvatar';
-import { getUsersWithStories } from '@/data/mockStories';
 import { rankStoryUsers } from '@/utils/feedAlgorithm';
 
 export function StoriesRow() {
   const router = useRouter();
   const { currentUser, getUser } = useApp();
 
-  const usersWithStories = getUsersWithStories();
+  const usersWithStories: string[] = [];
   const rankedUserIds = rankStoryUsers(usersWithStories);
 
   const handleStoryPress = (userId: string) => {

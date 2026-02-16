@@ -1,10 +1,9 @@
 import React from 'react';
 import { View, Image, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useApp } from '@/context/AppContext';
-import { User } from '@/data/mockUsers';
 
 interface StoryAvatarProps {
-  user: User;
+  user: any;
   isCurrentUser?: boolean;
   onPress: () => void;
   size?: 'small' | 'large';

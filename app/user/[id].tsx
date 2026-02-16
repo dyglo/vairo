@@ -7,7 +7,6 @@ import { useApp } from '@/context/AppContext';
 import { ProfileHeader } from '@/components/ProfileHeader';
 import { ProfileTabs } from '@/components/ProfileTabs';
 import { MediaGrid } from '@/components/MediaGrid';
-import { getPostsByUserId } from '@/data/mockPosts';
 
 export default function UserProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -26,7 +25,7 @@ export default function UserProfileScreen() {
     );
   }
 
-  const userPosts = getPostsByUserId(id);
+  const userPosts: any[] = [];
   const mediaPosts = userPosts.filter(post => post.media_url);
   const videoPosts = userPosts.filter(post => post.type === 'video');
 

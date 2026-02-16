@@ -1,7 +1,43 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { mockUsers, currentUser, User } from '@/data/mockUsers';
-import { mockPosts, Post } from '@/data/mockPosts';
-import { mockStories, Story } from '@/data/mockStories';
+
+export interface User {
+  id: string;
+  name: string;
+  username: string;
+  avatar: string;
+  bio: string;
+  location: string;
+  occupation: string;
+  followers_count: number;
+  following_count: number;
+  posts_count: number;
+  likes_count: number;
+  visibility_score: number;
+  recent_impressions: number;
+  created_at: string;
+}
+
+export interface Post {
+  id: string;
+  user_id: string;
+  type: 'text' | 'image' | 'video';
+  caption: string;
+  media_url?: string;
+  likes: number;
+  comments: number;
+  shares: number;
+  created_at: string;
+  reach_score: number;
+}
+
+export interface Story {
+  id: string;
+  user_id: string;
+  media_url: string;
+  created_at: string;
+  expires_at: string;
+  seen_by: string[];
+}
 
 export type ReactionType = 'heart' | 'laugh' | 'love' | 'wow' | 'sad' | 'angry';
 
@@ -17,7 +53,6 @@ interface AppState {
   users: User[];
   posts: Post[];
   stories: Story[];
-  currentUser: User;
   following: Set<string>;
   likedPosts: Set<string>;
   seenStories: Set<string>;
@@ -38,23 +73,20 @@ interface AppContextType extends AppState {
   getUser: (userId: string) => User | undefined;
   getUserStories: (userId: string) => Story[];
   hasUnseenStories: (userId: string) => boolean;
+  currentUser: User | null;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [users] = useState<User[]>(mockUsers);
-  const [posts, setPosts] = useState<Post[]>(mockPosts);
-  const [stories] = useState<Story[]>(mockStories);
-  const [following, setFollowing] = useState<Set<string>>(new Set(['user-1', 'user-2', 'user-5']));
-  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set(['post-1', 'post-4']));
+  const [users] = useState<User[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [stories] = useState<Story[]>([]);
+  const [currentUser] = useState<User | null>(null);
+  const [following, setFollowing] = useState<Set<string>>(new Set());
+  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
   const [seenStories, setSeenStories] = useState<Set<string>>(new Set());
-  const [postReactions, setPostReactions] = useState<Map<string, ReactionType>>(
-    new Map([
-      ['post-1', 'heart'],
-      ['post-4', 'love'],
-    ])
-  );
+  const [postReactions, setPostReactions] = useState<Map<string, ReactionType>>(new Map());
   const [postComments, setPostComments] = useState<Map<string, Comment[]>>(new Map());
 
   const toggleLike = useCallback((postId: string, reactionType: ReactionType = 'heart') => {
@@ -159,7 +191,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [postComments]);
 
   const getUser = useCallback((userId: string): User | undefined => {
-    if (userId === 'current-user') return currentUser;
     return users.find(u => u.id === userId);
   }, [users]);
 

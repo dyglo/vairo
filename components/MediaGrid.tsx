@@ -1,12 +1,11 @@
 import React from 'react';
 import { View, Image, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { Play } from 'lucide-react-native';
-import { Post } from '@/data/mockPosts';
 import { formatNumber } from '@/utils/feedAlgorithm';
 
 interface MediaGridProps {
-  posts: Post[];
-  onPostPress?: (post: Post) => void;
+  posts: any[];
+  onPostPress?: (post: any) => void;
 }
 
 const { width } = Dimensions.get('window');
