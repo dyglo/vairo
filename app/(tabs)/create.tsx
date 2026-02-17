@@ -40,7 +40,7 @@ export default function CreateScreen() {
     Alert.alert('Success', 'Post created successfully!', [
       {
         text: 'OK',
-        onPress: () => router.push('/'),
+        onPress: () => router.push('/(tabs)/'),
       },
     ]);
   };
