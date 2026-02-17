@@ -42,7 +42,7 @@ export function StoryAvatar({ user, isCurrentUser = false, onPress, size = 'smal
         />
       </View>
       <Text style={styles.username} numberOfLines={1}>
-        {isCurrentUser ? 'You' : user.name.split(' ')[0].toLowerCase()}
+        {isCurrentUser ? 'You' : (user.name || 'User').split(' ')[0].toLowerCase()}
       </Text>
     </TouchableOpacity>
   );

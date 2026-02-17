@@ -11,6 +11,9 @@ interface ProfileHeaderProps {
 
 export function ProfileHeader({ user, isCurrentUser = false }: ProfileHeaderProps) {
   const { isFollowing, toggleFollow } = useApp();
+  
+  if (!user) return null;
+  
   const following = isFollowing(user.id);
 
   const handleFollowPress = () => {

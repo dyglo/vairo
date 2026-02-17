@@ -216,9 +216,6 @@ export const loginLimiter = rateLimit({
     logRateLimitHit(req, '/api/auth/login', 5, '1 minute');
     handleRateLimitExceeded(req, res, '/api/auth/login');
   },
-  onLimitReached: (req: any) => {
-    logRateLimitHit(req, '/api/auth/login', 5, '1 minute');
-  },
 });
 
 /**
