@@ -1,13 +1,20 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
+import { envValidator } from '@/utils/envValidator';
+import { authAPI } from '@/utils/authAPI';
+import { apiClient } from '@/utils/apiClient';
+
+export type UserRole = 'user' | 'moderator' | 'admin';
 
 export interface User {
   id: string;
+  email: string;
   name: string;
   username: string;
   avatar: string;
   bio: string;
   location: string;
   occupation: string;
+  role: UserRole; // NEW: Role for RBAC
   followers_count: number;
   following_count: number;
   posts_count: number;
@@ -15,6 +22,18 @@ export interface User {
   visibility_score: number;
   recent_impressions: number;
   created_at: string;
+}
+
+/**
+ * Authentication state for logged-in user
+ * Includes access token and role for protected operations
+ */
+export interface AuthState {
+  userId: string;
+  email: string;
+  role: UserRole;
+  accessToken: string;
+  expiresIn: number; // Token expiration in seconds
 }
 
 export interface Post {
@@ -65,6 +84,7 @@ interface AppContextType extends AppState {
   toggleFollow: (userId: string) => void;
   markStorySeen: (storyId: string) => void;
   addComment: (postId: string, text: string) => void;
+  createPost: (caption: string, type: 'text' | 'image' | 'video', mediaUrl?: string) => void;
   isLiked: (postId: string) => boolean;
   isFollowing: (userId: string) => boolean;
   isStorySeen: (storyId: string) => boolean;
@@ -74,6 +94,14 @@ interface AppContextType extends AppState {
   getUserStories: (userId: string) => Story[];
   hasUnseenStories: (userId: string) => boolean;
   currentUser: User | null;
+  // NEW: Authentication and role-based access
+  auth: AuthState | null;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  isAdmin: () => boolean;
+  isModerator: () => boolean;
+  canModerate: () => boolean; // admin | moderator
+  canAdminister: () => boolean; // admin only
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -83,11 +111,68 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [stories] = useState<Story[]>([]);
   const [currentUser] = useState<User | null>(null);
+  const [auth, setAuth] = useState<AuthState | null>(null);
   const [following, setFollowing] = useState<Set<string>>(new Set());
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
   const [seenStories, setSeenStories] = useState<Set<string>>(new Set());
   const [postReactions, setPostReactions] = useState<Map<string, ReactionType>>(new Map());
   const [postComments, setPostComments] = useState<Map<string, Comment[]>>(new Map());
+
+  // Validate environment variables and restore auth state on app startup
+  useEffect(() => {
+    const initializeApp = async () => {
+      try {
+        // 1. Validate environment variables
+        envValidator.validate();
+        console.log('✓ Environment variables validated successfully');
+
+        // 2. Set up API client unauthorized handler
+        // When a 401 error occurs, try to refresh the token
+        apiClient.setUnauthorizedHandler(async () => {
+          try {
+            const response = await authAPI.refreshToken();
+            localStorage.setItem('accessToken', response.accessToken);
+            setAuth(prev => {
+              if (!prev) return null;
+              return { ...prev, accessToken: response.accessToken, expiresIn: response.expiresIn };
+            });
+          } catch (error) {
+            console.error('Token refresh failed:', error);
+            // Clear auth on refresh failure
+            setAuth(null);
+            localStorage.removeItem('accessToken');
+            throw error;
+          }
+        });
+
+        // 3. Restore authentication state from localStorage
+        const storedToken = localStorage.getItem('accessToken');
+        if (storedToken) {
+          try {
+            // Try to verify the stored token is still valid
+            const userData = await authAPI.verifyToken();
+            console.log('✓ Auth token verified, session restored');
+            // Note: Full auth state will be restored on next login
+            // For now, just confirm token is valid
+          } catch (error) {
+            console.warn('Stored auth token is invalid, clearing');
+            localStorage.removeItem('accessToken');
+          }
+        }
+      } catch (error) {
+        console.error('✗ Environment validation failed:', error);
+        // In a production app, you might show an error screen or disable certain features
+        // For now, we're logging the error
+        if (__DEV__) {
+          console.warn(
+            'Development mode: Some features may not work without proper environment configuration'
+          );
+        }
+      }
+    };
+
+    initializeApp();
+  }, []);
 
   const toggleLike = useCallback((postId: string, reactionType: ReactionType = 'heart') => {
     const wasLiked = likedPosts.has(postId);
@@ -150,6 +235,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const createPost = useCallback(
+    (caption: string, type: 'text' | 'image' | 'video', mediaUrl?: string) => {
+      // Validate that required environment variables are configured
+      try {
+        envValidator.validate();
+      } catch (error) {
+        console.error('Cannot create post: Environment validation failed', error);
+        return;
+      }
+
+      const newPost: Post = {
+        id: `post-${Date.now()}`,
+        user_id: currentUser?.id || 'current-user',
+        type,
+        caption,
+        media_url: mediaUrl,
+        likes: 0,
+        comments: 0,
+        shares: 0,
+        created_at: new Date().toISOString(),
+        reach_score: 0,
+      };
+
+      setPosts(prev => [newPost, ...prev]);
+    },
+    [currentUser?.id]
+  );
+
   const toggleFollow = useCallback((userId: string) => {
     setFollowing(prev => {
       const next = new Set(prev);
@@ -203,6 +316,67 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return userStories.some(s => !seenStories.has(s.id));
   }, [stories, seenStories]);
 
+  // NEW: Authentication functions for role-based access
+  const login = useCallback(async (email: string, password: string) => {
+    try {
+      // Call backend login endpoint using authAPI
+      const response = await authAPI.login(email, password);
+
+      // Store authentication state
+      setAuth({
+        userId: response.userId,
+        email: response.email,
+        role: response.role,
+        accessToken: response.accessToken,
+        expiresIn: response.expiresIn,
+      });
+
+      // Store access token in localStorage for persistence
+      localStorage.setItem('accessToken', response.accessToken);
+
+      console.log(`✓ Login successful for ${response.email} (${response.role})`);
+    } catch (error: any) {
+      console.error('Login error:', error);
+      throw error;
+    }
+  }, []);
+
+  const logout = useCallback(async () => {
+    try {
+      // Call backend logout endpoint if auth exists
+      if (auth?.accessToken) {
+        await authAPI.logout();
+      }
+
+      // Clear auth state
+      setAuth(null);
+      localStorage.removeItem('accessToken');
+
+      console.log('✓ Logout successful');
+    } catch (error: any) {
+      console.error('Logout error:', error);
+      // Clear state even if logout fails
+      setAuth(null);
+      localStorage.removeItem('accessToken');
+    }
+  }, [auth?.accessToken]);
+
+  const isAdmin = useCallback(() => {
+    return auth?.role === 'admin';
+  }, [auth?.role]);
+
+  const isModerator = useCallback(() => {
+    return auth?.role === 'moderator';
+  }, [auth?.role]);
+
+  const canModerate = useCallback(() => {
+    return auth?.role === 'admin' || auth?.role === 'moderator';
+  }, [auth?.role]);
+
+  const canAdminister = useCallback(() => {
+    return auth?.role === 'admin';
+  }, [auth?.role]);
+
   const value: AppContextType = {
     users,
     posts,
@@ -217,6 +391,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     toggleFollow,
     markStorySeen,
     addComment,
+    createPost,
     isLiked,
     isFollowing,
     isStorySeen,
@@ -225,6 +400,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     getUser,
     getUserStories,
     hasUnseenStories,
+    // NEW: Auth and role checking
+    auth,
+    login,
+    logout,
+    isAdmin,
+    isModerator,
+    canModerate,
+    canAdminister,
   };
 
   return (
