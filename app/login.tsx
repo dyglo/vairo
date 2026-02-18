@@ -151,7 +151,7 @@ export default function LoginScreen() {
         {/* Footer Section */}
         <View style={styles.footerSection}>
           <View style={styles.signupContainer}>
-            <Text style={styles.signupText}>Don't have an account?</Text>
+            <Text style={styles.signupText}>Don&apos;t have an account?</Text>
             <TouchableOpacity onPress={handleSignUp}>
               <Text style={styles.signupLink}>Sign Up</Text>
             </TouchableOpacity>
