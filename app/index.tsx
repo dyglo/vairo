@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView,} from 'react-native';
 import { useRouter } from 'expo-router';
 import { Heart, Share2, MessageCircle, Zap } from 'lucide-react-native';
 

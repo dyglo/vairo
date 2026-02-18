@@ -1,237 +1,77 @@
+// utils/apiClient.ts
+import { AuthCredentials, AuthResponse, UserSession, AuthError, TokenPair } from './types';
+import { getEnv } from '@/utils/envValidator';
+import { authenticatedFetch, getAccessToken } from './tokenManager';
+import { login as authLogin, register as authRegister } from './authentication';
+
 /**
- * API Client - Utility for making authenticated HTTP requests
- * 
- * Automatically includes access token in Authorization header
- * Handles 401 errors by refreshing token and retrying
- * 
- * @usage
- * import { apiClient } from '@/utils/apiClient';
- * 
- * // GET request
- * const users = await apiClient.get('/api/users');
- * 
- * // POST request
- * const post = await apiClient.post('/api/posts', { caption: 'Hello' });
- * 
- * // DELETE with auth
- * await apiClient.delete('/api/admin/users/123');
+ * API Client
+ * Handles user authentication and API requests with automatic token refresh
  */
-
-interface ApiResponse<T = any> {
-  success: boolean;
-  data?: T;
-  error?: {
-    code: string;
-    message: string;
-  };
-}
-
-interface ApiClientConfig {
-  baseUrl?: string;
-  timeout?: number;
-  onUnauthorized?: () => Promise<void>;
-  onForbidden?: () => void;
-}
-
-class APIClient {
-  private baseUrl: string;
-  private timeout: number;
-  private onUnauthorized?: () => Promise<void>;
-  private onForbidden?: () => void;
-
-  constructor(config: ApiClientConfig = {}) {
-    this.baseUrl = config.baseUrl || '';
-    this.timeout = config.timeout || 30000;
-    this.onUnauthorized = config.onUnauthorized;
-    this.onForbidden = config.onForbidden;
-  }
+export const apiClient = {
+  /**
+   * Register a new user
+   */
+  register: async (credentials: AuthCredentials): Promise<AuthResponse<{ userId: string; email: string }>> => {
+    return await authRegister(credentials);
+  },
 
   /**
-   * Get access token from storage
+   * Login a user
    */
-  private getAccessToken(): string | null {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('accessToken');
-    }
-    return null;
-  }
+  login: async (credentials: AuthCredentials): Promise<AuthResponse<UserSession>> => {
+    return await authLogin(credentials);
+  },
 
   /**
-   * Set access token in storage
+   * Logout the current user
    */
-  private setAccessToken(token: string): void {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('accessToken', token);
-    }
-  }
-
-  /**
-   * Clear access token
-   */
-  private clearAccessToken(): void {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('accessToken');
-    }
-  }
-
-  /**
-   * Make HTTP request with auth token
-   */
-  private async request<T>(
-    method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
-    path: string,
-    options?: {
-      body?: any;
-      headers?: Record<string, string>;
-      retry?: boolean;
-    }
-  ): Promise<ApiResponse<T>> {
-    const token = this.getAccessToken();
-    const url = this.baseUrl + path;
-
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    };
-
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    const requestOptions: RequestInit = {
-      method,
-      headers,
-      body: options?.body ? JSON.stringify(options.body) : undefined,
-      signal: AbortSignal.timeout(this.timeout),
-    };
-
+  logout: async (): Promise<boolean> => {
+    // Using tokenManager.logout internally
     try {
-      const response = await fetch(url, requestOptions);
-
-      // Handle 401 Unauthorized
-      if (response.status === 401) {
-        if (this.onUnauthorized && options?.retry !== false) {
-          // Try to refresh token
-          await this.onUnauthorized();
-          // Retry with new token
-          return this.request<T>(method, path, { ...options, retry: false });
-        }
-        this.clearAccessToken();
-        throw new Error('Unauthorized');
-      }
-
-      // Handle 403 Forbidden
-      if (response.status === 403) {
-        if (this.onForbidden) {
-          this.onForbidden();
-        }
-        throw new Error('Forbidden: Insufficient permissions');
-      }
-
-      // Handle other HTTP errors
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        throw new Error(errorData.error?.message || `HTTP ${response.status}`);
-      }
-
-      // Parse response
-      const data = await response.json();
-      return data as ApiResponse<T>;
-    } catch (error: any) {
-      // Handle network errors
-      if (error.name === 'AbortError') {
-        throw new Error('Request timeout');
-      }
-
-      throw error;
+      const { logout } = await import('./tokenManager');
+      return await logout();
+    } catch (err) {
+      console.error('API logout error:', err);
+      return false;
     }
-  }
+  },
 
   /**
-   * GET request
+   * Generic GET request with auth
    */
-  async get<T>(path: string, headers?: Record<string, string>): Promise<T> {
-    const response = await this.request<T>('GET', path, { headers });
-    if (!response.success) {
-      throw new Error(response.error?.message || 'Request failed');
-    }
-    return response.data as T;
-  }
+  get: async <T = any>(endpoint: string): Promise<T> => {
+    const apiBaseUrl = getEnv('apiBaseUrl') as string;
+    const res = await authenticatedFetch(`${apiBaseUrl}${endpoint}`, { method: 'GET' });
+    return await res.json() as T;
+  },
 
   /**
-   * POST request
+   * Generic POST request with auth
    */
-  async post<T>(
-    path: string,
-    body?: any,
-    headers?: Record<string, string>
-  ): Promise<T> {
-    const response = await this.request<T>('POST', path, { body, headers });
-    if (!response.success) {
-      throw new Error(response.error?.message || 'Request failed');
-    }
-    return response.data as T;
-  }
+  post: async <T = any>(endpoint: string, body?: any): Promise<T> => {
+    const apiBaseUrl = getEnv('apiBaseUrl') as string;
+    const res = await authenticatedFetch(`${apiBaseUrl}${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    return await res.json() as T;
+  },
 
   /**
-   * PUT request
+   * Get the current user info from access token
    */
-  async put<T>(
-    path: string,
-    body?: any,
-    headers?: Record<string, string>
-  ): Promise<T> {
-    const response = await this.request<T>('PUT', path, { body, headers });
-    if (!response.success) {
-      throw new Error(response.error?.message || 'Request failed');
-    }
-    return response.data as T;
-  }
+  getCurrentUser: (): { userId: string; email: string } | null => {
+    const { getCurrentUser } = require('./tokenManager');
+    return getCurrentUser();
+  },
 
   /**
-   * PATCH request
+   * Check if user is authenticated
    */
-  async patch<T>(
-    path: string,
-    body?: any,
-    headers?: Record<string, string>
-  ): Promise<T> {
-    const response = await this.request<T>('PATCH', path, { body, headers });
-    if (!response.success) {
-      throw new Error(response.error?.message || 'Request failed');
-    }
-    return response.data as T;
-  }
-
-  /**
-   * DELETE request
-   */
-  async delete<T>(path: string, headers?: Record<string, string>): Promise<T> {
-    const response = await this.request<T>('DELETE', path, { headers });
-    if (!response.success) {
-      throw new Error(response.error?.message || 'Request failed');
-    }
-    return response.data as T;
-  }
-
-  /**
-   * Set custom unauthorized handler
-   */
-  setUnauthorizedHandler(handler: () => Promise<void>): void {
-    this.onUnauthorized = handler;
-  }
-
-  /**
-   * Set custom forbidden handler
-   */
-  setForbiddenHandler(handler: () => void): void {
-    this.onForbidden = handler;
-  }
-}
-
-// Export singleton instance
-export const apiClient = new APIClient({
-  baseUrl: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000',
-});
-
-export type { ApiResponse, ApiClientConfig };
+  isAuthenticated: (): boolean => {
+    const { isAuthenticated } = require('./tokenManager');
+    return isAuthenticated();
+  },
+};

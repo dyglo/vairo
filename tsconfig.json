@@ -1,10 +1,11 @@
 {
+  "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "target": "ES2020",
-    "module": "commonjs",
-    "lib": [
-      "ES2020"
-    ],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "lib": ["ES2020"],
     "outDir": "./dist",
     "rootDir": "./",
     "strict": true,
@@ -16,14 +17,12 @@
     "declarationMap": true,
     "sourceMap": true,
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"]
     }
   },
   "ts-node": {
     "compilerOptions": {
-      "module": "commonjs",
+      "module": "CommonJS",
       "target": "ES2020"
     },
     "transpileOnly": true,
@@ -35,6 +34,5 @@
     "utils/**/*.ts",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
-  ],
-  "extends": "expo/tsconfig.base"
+  ]
 }

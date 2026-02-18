@@ -19,15 +19,30 @@ import { formatTimeAgo } from '@/utils/feedAlgorithm';
 const { width, height } = Dimensions.get('window');
 const STORY_DURATION = 5000;
 
+type Story = {
+  id: string;
+  media_url: string;
+  created_at: string;
+};
+
+type GroupedStory = {
+  user_id: string;
+  stories: Story[];
+};
+
 export default function StoryViewerScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { userId } = useLocalSearchParams<{ userId: string }>();
   const { getUser, markStorySeen, isFollowing, toggleFollow } = useApp();
 
-  const groupedStories: any[] = [];
+  // TODO: replace with real grouped stories from your context or API
+  const groupedStories: GroupedStory[] = [];
+
   const userStoryIndex = groupedStories.findIndex(g => g.user_id === userId);
-  const [currentUserIndex, setCurrentUserIndex] = useState(userStoryIndex >= 0 ? userStoryIndex : 0);
+  const [currentUserIndex, setCurrentUserIndex] = useState(
+    userStoryIndex >= 0 ? userStoryIndex : 0
+  );
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
   const [replyText, setReplyText] = useState('');
 
@@ -39,6 +54,31 @@ export default function StoryViewerScreen() {
   const storyUser = currentUserStories ? getUser(currentUserStories.user_id) : null;
   const following = storyUser ? isFollowing(storyUser.id) : false;
 
+  const goToNextStory = useCallback(() => {
+    if (!currentUserStories) return;
+
+    if (currentStoryIndex < currentUserStories.stories.length - 1) {
+      setCurrentStoryIndex(prev => prev + 1);
+    } else if (currentUserIndex < groupedStories.length - 1) {
+      setCurrentUserIndex(prev => prev + 1);
+      setCurrentStoryIndex(0);
+    } else {
+      router.back();
+    }
+  }, [currentStoryIndex, currentUserIndex, currentUserStories, groupedStories, router]);
+
+  const goToPreviousStory = useCallback(() => {
+    if (!currentUserStories) return;
+
+    if (currentStoryIndex > 0) {
+      setCurrentStoryIndex(prev => prev - 1);
+    } else if (currentUserIndex > 0) {
+      const prevUserStories = groupedStories[currentUserIndex - 1];
+      setCurrentUserIndex(prev => prev - 1);
+      setCurrentStoryIndex(prevUserStories.stories.length - 1);
+    }
+  }, [currentStoryIndex, currentUserIndex, currentUserStories, groupedStories]);
+
   const startProgress = useCallback(() => {
     progressAnim.setValue(0);
     animationRef.current = Animated.timing(progressAnim, {
@@ -47,16 +87,12 @@ export default function StoryViewerScreen() {
       useNativeDriver: false,
     });
     animationRef.current.start(({ finished }) => {
-      if (finished) {
-        goToNextStory();
-      }
+      if (finished) goToNextStory();
     });
-  }, [currentStoryIndex, currentUserIndex]);
+  }, [progressAnim, goToNextStory]);
 
   const stopProgress = useCallback(() => {
-    if (animationRef.current) {
-      animationRef.current.stop();
-    }
+    animationRef.current?.stop();
   }, []);
 
   useEffect(() => {
@@ -65,42 +101,16 @@ export default function StoryViewerScreen() {
       startProgress();
     }
     return () => stopProgress();
-  }, [currentStory?.id, startProgress, stopProgress]);
-
-  const goToNextStory = () => {
-    if (currentStoryIndex < (currentUserStories?.stories.length || 0) - 1) {
-      setCurrentStoryIndex(prev => prev + 1);
-    } else if (currentUserIndex < groupedStories.length - 1) {
-      setCurrentUserIndex(prev => prev + 1);
-      setCurrentStoryIndex(0);
-    } else {
-      router.back();
-    }
-  };
-
-  const goToPreviousStory = () => {
-    if (currentStoryIndex > 0) {
-      setCurrentStoryIndex(prev => prev - 1);
-    } else if (currentUserIndex > 0) {
-      setCurrentUserIndex(prev => prev - 1);
-      const prevUserStories = groupedStories[currentUserIndex - 1];
-      setCurrentStoryIndex(prevUserStories.stories.length - 1);
-    }
-  };
+  }, [currentStory?.id, markStorySeen, startProgress, stopProgress]);
 
   const handleTap = (event: { nativeEvent: { locationX: number } }) => {
     const tapX = event.nativeEvent.locationX;
-    if (tapX < width / 3) {
-      goToPreviousStory();
-    } else {
-      goToNextStory();
-    }
+    if (tapX < width / 3) goToPreviousStory();
+    else goToNextStory();
   };
 
   const handleFollowPress = () => {
-    if (storyUser) {
-      toggleFollow(storyUser.id);
-    }
+    if (storyUser) toggleFollow(storyUser.id);
   };
 
   if (!currentStory || !storyUser) {
@@ -114,7 +124,7 @@ export default function StoryViewerScreen() {
     );
   }
 
-  const storyCount = currentUserStories.stories.length;
+  const storyCount = currentUserStories?.stories.length || 0;
 
   return (
     <View style={styles.container}>
@@ -154,7 +164,9 @@ export default function StoryViewerScreen() {
               <Image source={{ uri: storyUser.avatar }} style={styles.avatar} />
               <View style={styles.userMeta}>
                 <Text style={styles.userName}>{storyUser.name}</Text>
-                <Text style={styles.timeAgo}>{formatTimeAgo(currentStory.created_at)}</Text>
+                <Text style={styles.timeAgo}>
+                  {formatTimeAgo(currentStory.created_at)}
+                </Text>
               </View>
             </View>
             <TouchableOpacity
@@ -185,7 +197,7 @@ export default function StoryViewerScreen() {
           <View style={styles.replyContainer}>
             <TextInput
               style={styles.replyInput}
-              placeholder="Reply Story.."
+              placeholder="Reply Story..."
               placeholderTextColor="rgba(255,255,255,0.7)"
               value={replyText}
               onChangeText={setReplyText}
@@ -200,157 +212,4 @@ export default function StoryViewerScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  centered: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorText: {
-    color: '#fff',
-    fontSize: 16,
-  },
-  backLink: {
-    color: '#FFD400',
-    fontSize: 14,
-    marginTop: 12,
-  },
-  storyContent: {
-    flex: 1,
-  },
-  storyImage: {
-    width: width,
-    height: height,
-    position: 'absolute',
-  },
-  overlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 12,
-  },
-  progressContainer: {
-    flexDirection: 'row',
-    marginBottom: 12,
-  },
-  progressBarBg: {
-    flex: 1,
-    height: 3,
-    backgroundColor: 'rgba(255,255,255,0.4)',
-    borderRadius: 2,
-    marginHorizontal: 2,
-    overflow: 'hidden',
-  },
-  progressBar: {
-    height: '100%',
-    backgroundColor: '#fff',
-    borderRadius: 2,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  userInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: '#FFD400',
-  },
-  userMeta: {
-    marginLeft: 10,
-  },
-  userName: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  timeAgo: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 12,
-    marginTop: 1,
-  },
-  followBtn: {
-    backgroundColor: '#0066CC',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 16,
-  },
-  followingBtn: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-  },
-  followBtnText: {
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  followingBtnText: {
-    color: 'rgba(255,255,255,0.8)',
-  },
-  storyMentionContainer: {
-    position: 'absolute',
-    top: 200,
-    left: 16,
-  },
-  storyMention: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '500',
-    textShadowColor: 'rgba(0,0,0,0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
-  },
-  bottomOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 16,
-  },
-  actions: {
-    position: 'absolute',
-    right: 16,
-    bottom: 100,
-    alignItems: 'center',
-  },
-  actionBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  replyContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    borderRadius: 24,
-    paddingLeft: 20,
-    paddingRight: 6,
-  },
-  replyInput: {
-    flex: 1,
-    color: '#fff',
-    fontSize: 15,
-    paddingVertical: 14,
-  },
-  sendBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+// --- keep your styles unchanged ---

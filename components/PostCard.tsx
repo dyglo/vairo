@@ -47,14 +47,6 @@ export function PostCard({ post }: PostCardProps) {
     }
   };
 
-  const getReactionEmoji = (type: ReactionType) => {
-    return REACTION_EMOJIS.find(r => r.type === type)?.emoji || '❤️';
-  };
-
-  const getReactionColor = (type: ReactionType) => {
-    return REACTION_EMOJIS.find(r => r.type === type)?.color || '#FF4D4D';
-  };
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>
