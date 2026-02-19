@@ -56,15 +56,15 @@ function getStore() {
     try {
       const { RedisStore } = require('rate-limit-redis');
       const redis = require('redis');
-      
+
       const redisClient = redis.createClient({
         url: process.env.REDIS_URL,
       });
-      
+
       redisClient.on('error', (err: Error) => {
         console.error('Redis error, falling back to memory store:', err.message);
       });
-      
+
       return new RedisStore({
         client: redisClient,
         prefix: process.env.RATE_LIMIT_PREFIX || 'rl:',
@@ -73,7 +73,7 @@ function getStore() {
       console.warn('Redis not available for rate limiting, using memory store');
     }
   }
-  
+
   // Default: memory store (built-in)
   return undefined;
 }
@@ -87,7 +87,7 @@ function getStore() {
  */
 function handleRateLimitExceeded(req: Request, res: Response, endpoint: string) {
   const retryAfter = res.getHeader('Retry-After') || '60';
-  
+
   res.status(429).json({
     status: 'error',
     code: 'RATE_LIMIT_EXCEEDED',
@@ -109,17 +109,17 @@ function getClientIp(req: Request): string {
     const ips = typeof forwarded === 'string' ? forwarded.split(',') : forwarded;
     return ips[0].trim();
   }
-  
+
   const cloudflareIp = req.headers['cf-connecting-ip'];
   if (cloudflareIp) {
     return typeof cloudflareIp === 'string' ? cloudflareIp : cloudflareIp[0];
   }
-  
+
   const realIp = req.headers['x-real-ip'];
   if (realIp) {
     return typeof realIp === 'string' ? realIp : realIp[0];
   }
-  
+
   return req.ip || req.socket.remoteAddress || 'unknown';
 }
 
@@ -128,29 +128,29 @@ function getClientIp(req: Request): string {
  */
 function shouldSkip(req: Request): boolean {
   const ip = getClientIp(req);
-  
+
   // Skip internal/localhost
   if (['127.0.0.1', '::1', 'localhost'].includes(ip)) {
     return true;
   }
-  
+
   // Skip health check endpoints
   if (req.path === '/health' || req.path === '/healthz') {
     return true;
   }
-  
+
   // Skip admin internal endpoints
   const internalPaths = ['/admin/health', '/admin/metrics', '/admin/status'];
   if (internalPaths.some(p => req.path.startsWith(p))) {
     return true;
   }
-  
+
   // Check env var whitelist
   const whitelistedIps = (process.env.RATE_LIMIT_WHITELIST || '').split(',').filter(Boolean);
   if (whitelistedIps.includes(ip)) {
     return true;
   }
-  
+
   return false;
 }
 
@@ -160,12 +160,12 @@ function shouldSkip(req: Request): boolean {
 function logRateLimitHit(req: Request, endpoint: string, limit: number, window: string) {
   const ip = getClientIp(req);
   const userId = (req as any).user?.id || 'anonymous';
-  
+
   // Log to console in development
   if (!IS_PRODUCTION) {
     console.warn(`⚠️ Rate limit hit: ${endpoint} from ${ip} (user: ${userId})`);
   }
-  
+
   // Log structured log for monitoring
   console.log(JSON.stringify({
     type: 'rate_limit_hit',
@@ -215,9 +215,6 @@ export const loginLimiter = rateLimit({
   handler: (req: any, res: any) => {
     logRateLimitHit(req, '/api/auth/login', 5, '1 minute');
     handleRateLimitExceeded(req, res, '/api/auth/login');
-  },
-  onLimitReached: (req: any) => {
-    logRateLimitHit(req, '/api/auth/login', 5, '1 minute');
   },
 });
 
@@ -272,7 +269,7 @@ export const passwordResetLimiter = rateLimit({
     if (!email) {
       return getClientIp(req); // Fallback to IP
     }
-    
+
     // Hash email to not expose in logs
     const emailHash = crypto.createHash('sha256').update(email).digest('hex');
     return `reset:${emailHash}`;
@@ -470,13 +467,13 @@ export const rateLimiters = {
   register: registerLimiter,
   passwordReset: passwordResetLimiter,
   verifyToken: verifyTokenLimiter,
-  
+
   // Content endpoints
   createPost: createPostLimiter,
   createComment: createCommentLimiter,
   like: likeLimiter,
   updateProfile: updateProfileLimiter,
-  
+
   // Global fallback
   global: globalLimiter,
 };

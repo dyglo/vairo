@@ -3,7 +3,6 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { AppProvider } from '@/context/AppContext';
-import { useAuth } from '@/hooks/useAuth';
 import { envValidator } from '@/utils/envValidator';
 
 /**

@@ -5,17 +5,6 @@ import { useApp } from '@/context/AppContext';
 import { formatNumber, formatTimeAgo } from '@/utils/feedAlgorithm';
 import { useRouter } from 'expo-router';
 
-type ReactionType = 'heart' | 'laugh' | 'love' | 'wow' | 'sad' | 'angry';
-
-const REACTION_EMOJIS = [
-  { type: 'heart', emoji: '❤️', color: '#FF4D4D' },
-  { type: 'laugh', emoji: '😂', color: '#FFD400' },
-  { type: 'love', emoji: '🥰', color: '#FF6B9D' },
-  { type: 'wow', emoji: '😮', color: '#4ECDC4' },
-  { type: 'sad', emoji: '😢', color: '#5B9CE6' },
-  { type: 'angry', emoji: '😠', color: '#FF6B35' },
-] as const;
-
 interface PostCardProps {
   post: any;
 }
@@ -45,14 +34,6 @@ export function PostCard({ post }: PostCardProps) {
       setCommentText('');
       setShowCommentModal(false);
     }
-  };
-
-  const getReactionEmoji = (type: ReactionType) => {
-    return REACTION_EMOJIS.find(r => r.type === type)?.emoji || '❤️';
-  };
-
-  const getReactionColor = (type: ReactionType) => {
-    return REACTION_EMOJIS.find(r => r.type === type)?.color || '#FF4D4D';
   };
 
   return (
