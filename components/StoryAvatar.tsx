@@ -11,6 +11,9 @@ interface StoryAvatarProps {
 
 export function StoryAvatar({ user, isCurrentUser = false, onPress, size = 'small' }: StoryAvatarProps) {
   const { hasUnseenStories } = useApp();
+
+  if (!user) return null;
+
   const hasUnseen = hasUnseenStories(user.id);
 
   const avatarSize = size === 'large' ? 72 : 64;

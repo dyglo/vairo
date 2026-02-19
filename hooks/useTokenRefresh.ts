@@ -17,6 +17,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { authAPI } from '@/utils/authAPI';
+import { storage } from '@/utils/storage';
 
 interface UseTokenRefreshOptions {
   bufferTime?: number; // Time before expiration to refresh (default: 60 seconds)
@@ -64,7 +65,7 @@ export function useTokenRefresh(options: UseTokenRefreshOptions = {}) {
         // Update auth state with new token
         // Note: This is a simplified approach
         // In production, you might want to use a more sophisticated update mechanism
-        localStorage.setItem('accessToken', response.accessToken);
+        await storage.setItem('accessToken', response.accessToken);
 
         setIsRefreshing(false);
         setLastRefreshError(null);
@@ -77,9 +78,7 @@ export function useTokenRefresh(options: UseTokenRefreshOptions = {}) {
         if (error.message.includes('401') || error.message.includes('Unauthorized')) {
           console.warn('Token refresh failed with auth error, user needs to login again');
           // Clear auth on refresh failure
-          if (typeof localStorage !== 'undefined') {
-            localStorage.removeItem('accessToken');
-          }
+          await storage.removeItem('accessToken');
         }
 
         throw error;

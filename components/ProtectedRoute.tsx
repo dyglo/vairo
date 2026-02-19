@@ -4,10 +4,12 @@
  * Provides components to protect screens based on authentication and role
  */
 
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'expo-router';
-import { View, Text } from 'react-native';
+import { View, ActivityIndicator, Text } from 'react-native';
+
+import { Redirect, useRootNavigationState } from 'expo-router';
 
 /**
  * ProtectedRoute - Requires authentication
@@ -15,16 +17,20 @@ import { View, Text } from 'react-native';
  */
 export function ProtectedRoute({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuth();
-  const router = useRouter();
+  const navigationState = useRootNavigationState();
 
-  if (!isAuthenticated) {
-    // In a real app, you'd redirect to login screen
-    // For now, show loading/auth screen
+  // Wait for navigation state to be ready before redirecting
+  // This prevents the "Attempted to navigate before mounting" error
+  if (!navigationState?.key) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Authentication required. Please log in.</Text>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
+        <ActivityIndicator size="large" color="#FFD400" />
       </View>
     );
+  }
+
+  if (!isAuthenticated) {
+    return <Redirect href={"/login" as any} />;
   }
 
   return <>{children}</>;

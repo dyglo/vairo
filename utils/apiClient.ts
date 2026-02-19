@@ -17,6 +17,8 @@
  * await apiClient.delete('/api/admin/users/123');
  */
 
+import { storage } from './storage';
+
 interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
@@ -49,29 +51,22 @@ class APIClient {
   /**
    * Get access token from storage
    */
-  private getAccessToken(): string | null {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('accessToken');
-    }
-    return null;
+  private async getAccessToken(): Promise<string | null> {
+    return await storage.getItem('accessToken');
   }
 
   /**
    * Set access token in storage
    */
-  private setAccessToken(token: string): void {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('accessToken', token);
-    }
+  private async setAccessToken(token: string): Promise<void> {
+    await storage.setItem('accessToken', token);
   }
 
   /**
    * Clear access token
    */
-  private clearAccessToken(): void {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('accessToken');
-    }
+  private async clearAccessToken(): Promise<void> {
+    await storage.removeItem('accessToken');
   }
 
   /**
@@ -86,7 +81,7 @@ class APIClient {
       retry?: boolean;
     }
   ): Promise<ApiResponse<T>> {
-    const token = this.getAccessToken();
+    const token = await this.getAccessToken();
     const url = this.baseUrl + path;
 
     const headers: Record<string, string> = {
@@ -116,7 +111,7 @@ class APIClient {
           // Retry with new token
           return this.request<T>(method, path, { ...options, retry: false });
         }
-        this.clearAccessToken();
+        await this.clearAccessToken();
         throw new Error('Unauthorized');
       }
 

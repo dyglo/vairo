@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback, ReactNode, use
 import { envValidator } from '@/utils/envValidator';
 import { authAPI } from '@/utils/authAPI';
 import { apiClient } from '@/utils/apiClient';
+import { storage } from '@/utils/storage';
 
 export type UserRole = 'user' | 'moderator' | 'admin';
 
@@ -110,7 +111,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [users] = useState<User[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [stories] = useState<Story[]>([]);
-  const [currentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [auth, setAuth] = useState<AuthState | null>(null);
   const [following, setFollowing] = useState<Set<string>>(new Set());
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
@@ -131,7 +132,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         apiClient.setUnauthorizedHandler(async () => {
           try {
             const response = await authAPI.refreshToken();
-            localStorage.setItem('accessToken', response.accessToken);
+            await storage.setItem('accessToken', response.accessToken);
             setAuth(prev => {
               if (!prev) return null;
               return { ...prev, accessToken: response.accessToken, expiresIn: response.expiresIn };
@@ -140,23 +141,60 @@ export function AppProvider({ children }: { children: ReactNode }) {
             console.error('Token refresh failed:', error);
             // Clear auth on refresh failure
             setAuth(null);
-            localStorage.removeItem('accessToken');
+            await storage.removeItem('accessToken');
             throw error;
           }
         });
 
-        // 3. Restore authentication state from localStorage
-        const storedToken = localStorage.getItem('accessToken');
+        // 3. Restore authentication state from storage
+        const storedToken = await storage.getItem('accessToken');
         if (storedToken) {
           try {
-            // Try to verify the stored token is still valid
-            const userData = await authAPI.verifyToken();
-            console.log('✓ Auth token verified, session restored');
-            // Note: Full auth state will be restored on next login
-            // For now, just confirm token is valid
+            // In dev mode, we might not have a working backend yet
+            // If verification fails, we can either clear the token or just keep it
+            if (__DEV__) {
+              // For mock purposes, if token starts with 'mock-', just accept it
+              if (storedToken.startsWith('mock-')) {
+                console.log('✓ Mock session restored from storage');
+                // We'll restore the full auth state from the token parts if needed
+                // For now, let's just pretend it's valid
+                setAuth({
+                  userId: 'dev-user-id',
+                  email: 'dev@example.com',
+                  role: 'admin',
+                  accessToken: storedToken,
+                  expiresIn: 3600,
+                });
+                // Also restore currentUser in dev mode
+                setCurrentUser({
+                  id: 'dev-user-id',
+                  email: 'dev@example.com',
+                  name: 'Developer',
+                  username: 'developer',
+                  avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop',
+                  bio: 'I build cool things',
+                  location: 'San Francisco, CA',
+                  occupation: 'Software Engineer',
+                  role: 'admin',
+                  followers_count: 1250,
+                  following_count: 450,
+                  posts_count: 42,
+                  likes_count: 8500,
+                  visibility_score: 95,
+                  recent_impressions: 15400,
+                  created_at: new Date().toISOString(),
+                });
+              } else {
+                await authAPI.verifyToken();
+                console.log('✓ Auth token verified, session restored');
+              }
+            } else {
+              await authAPI.verifyToken();
+              console.log('✓ Auth token verified, session restored');
+            }
           } catch (error) {
-            console.warn('Stored auth token is invalid, clearing');
-            localStorage.removeItem('accessToken');
+            console.warn('Auth session restoration failed, clearing');
+            await storage.removeItem('accessToken');
           }
         }
       } catch (error) {
@@ -319,22 +357,50 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // NEW: Authentication functions for role-based access
   const login = useCallback(async (email: string, password: string) => {
     try {
-      // Call backend login endpoint using authAPI
-      const response = await authAPI.login(email, password);
+      // MOCK LOGIN: Accept any credentials for development as requested
+      // In a real app, this would call authAPI.login(email, password)
+
+      const mockUser = {
+        userId: 'dev-user-id',
+        email: email,
+        role: 'admin' as UserRole,
+        accessToken: 'mock-token-' + Date.now(),
+        expiresIn: 3600,
+      };
 
       // Store authentication state
       setAuth({
-        userId: response.userId,
-        email: response.email,
-        role: response.role,
-        accessToken: response.accessToken,
-        expiresIn: response.expiresIn,
+        userId: mockUser.userId,
+        email: mockUser.email,
+        role: mockUser.role,
+        accessToken: mockUser.accessToken,
+        expiresIn: mockUser.expiresIn,
       });
 
-      // Store access token in localStorage for persistence
-      localStorage.setItem('accessToken', response.accessToken);
+      // Store access token in storage for persistence
+      await storage.setItem('accessToken', mockUser.accessToken);
 
-      console.log(`✓ Login successful for ${response.email} (${response.role})`);
+      // Set currentUser
+      setCurrentUser({
+        id: mockUser.userId,
+        email: mockUser.email,
+        name: email.split('@')[0],
+        username: email.split('@')[0],
+        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop',
+        bio: 'Just another user',
+        location: 'Earth',
+        occupation: 'Explorer',
+        role: mockUser.role,
+        followers_count: 0,
+        following_count: 0,
+        posts_count: 0,
+        likes_count: 0,
+        visibility_score: 10,
+        recent_impressions: 0,
+        created_at: new Date().toISOString(),
+      });
+
+      console.log(`✓ Mock Login successful for ${mockUser.email} (${mockUser.role})`);
     } catch (error: any) {
       console.error('Login error:', error);
       throw error;
@@ -350,14 +416,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       // Clear auth state
       setAuth(null);
-      localStorage.removeItem('accessToken');
+      setCurrentUser(null);
+      await storage.removeItem('accessToken');
 
       console.log('✓ Logout successful');
     } catch (error: any) {
       console.error('Logout error:', error);
       // Clear state even if logout fails
       setAuth(null);
-      localStorage.removeItem('accessToken');
+      await storage.removeItem('accessToken');
     }
   }, [auth?.accessToken]);
 

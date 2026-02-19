@@ -17,7 +17,7 @@ class EnvironmentValidator {
   private env: EnvironmentVariables | null = null;
   private validationErrors: string[] = [];
 
-  private constructor() {}
+  private constructor() { }
 
   static getInstance(): EnvironmentValidator {
     if (!EnvironmentValidator.instance) {
@@ -38,34 +38,56 @@ class EnvironmentValidator {
     this.validationErrors = [];
     const errors: string[] = [];
 
+    const isDev = (process.env.NODE_ENV || 'development') === 'development';
+
     // Check Supabase URL
-    const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+    let supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
     if (!supabaseUrl || supabaseUrl.includes('your_supabase')) {
-      errors.push(
-        'EXPO_PUBLIC_SUPABASE_URL is not configured. Please set it in your .env file.'
-      );
+      if (isDev) {
+        supabaseUrl = 'https://placeholder-project.supabase.co';
+        console.warn('⚠️ EXPO_PUBLIC_SUPABASE_URL is missing. Using placeholder for development.');
+      } else {
+        errors.push(
+          'EXPO_PUBLIC_SUPABASE_URL is not configured. Please set it in your .env file.'
+        );
+      }
     }
 
     // Check Supabase Anon Key
-    const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+    let supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
     if (!supabaseAnonKey || supabaseAnonKey.includes('your_supabase')) {
-      errors.push(
-        'EXPO_PUBLIC_SUPABASE_ANON_KEY is not configured. Please set it in your .env file.'
-      );
+      if (isDev) {
+        supabaseAnonKey = 'placeholder-key';
+        console.warn('⚠️ EXPO_PUBLIC_SUPABASE_ANON_KEY is missing. Using placeholder for development.');
+      } else {
+        errors.push(
+          'EXPO_PUBLIC_SUPABASE_ANON_KEY is not configured. Please set it in your .env file.'
+        );
+      }
     }
 
     // Check JWT Secret
-    const jwtSecret = process.env.JWT_SECRET;
+    let jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret || jwtSecret.includes('your_jwt_secret')) {
-      errors.push(
-        'JWT_SECRET is not configured. Please set it in your .env file. Generate a secure random string.'
-      );
+      if (isDev) {
+        jwtSecret = 'placeholder-jwt-secret-for-dev-only';
+        console.warn('⚠️ JWT_SECRET is missing. Using placeholder for development.');
+      } else {
+        errors.push(
+          'JWT_SECRET is not configured. Please set it in your .env file. Generate a secure random string.'
+        );
+      }
     }
 
     // Check API Base URL
-    const apiBaseUrl = process.env.API_BASE_URL;
+    let apiBaseUrl = process.env.API_BASE_URL;
     if (!apiBaseUrl) {
-      errors.push('API_BASE_URL is not configured. Please set it in your .env file.');
+      if (isDev) {
+        apiBaseUrl = 'http://localhost:3000';
+        console.warn('⚠️ API_BASE_URL is missing. Using placeholder for development.');
+      } else {
+        errors.push('API_BASE_URL is not configured. Please set it in your .env file.');
+      }
     }
 
     // Check Node Environment
