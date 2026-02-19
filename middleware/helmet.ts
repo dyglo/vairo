@@ -127,7 +127,7 @@ export function configureHelmet(app: Express): void {
   // Prevents malicious scripts from accessing sensitive APIs
 
   app.use(
-    helmet.permissionsPolicy({
+    (helmet as any).permissionsPolicy({
       permissions: {
         // Camera: disable (we're an API, not a web app)
         camera: ['()'],
@@ -578,4 +578,4 @@ export function configureHelmet(app: Express): void {
  *    (Provides detailed CSP validation)
  */
 
-export {};
+export { };
