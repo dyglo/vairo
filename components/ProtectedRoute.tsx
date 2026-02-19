@@ -6,7 +6,6 @@
 
 import React, { ReactNode } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useRouter } from 'expo-router';
 import { View, Text } from 'react-native';
 
 /**
@@ -15,7 +14,6 @@ import { View, Text } from 'react-native';
  */
 export function ProtectedRoute({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuth();
-  const router = useRouter();
 
   if (!isAuthenticated) {
     // In a real app, you'd redirect to login screen
@@ -36,7 +34,6 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
  */
 export function AdminRoute({ children }: { children: ReactNode }) {
   const { isAdmin } = useAuth();
-  const router = useRouter();
 
   if (!isAdmin()) {
     return (
@@ -55,7 +52,6 @@ export function AdminRoute({ children }: { children: ReactNode }) {
  */
 export function ModeratorRoute({ children }: { children: ReactNode }) {
   const { canModerate } = useAuth();
-  const router = useRouter();
 
   if (!canModerate()) {
     return (
@@ -84,7 +80,7 @@ export function RoleBasedRoute({
   if (!role || !allowedRoles.includes(role)) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>You don't have permission to access this page.</Text>
+        <Text>You don&apos;t have permission to access this page.</Text>
       </View>
     );
   }

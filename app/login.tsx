@@ -74,6 +74,10 @@ export default function LoginScreen() {
         )}
       </TouchableOpacity>
 
+      <TouchableOpacity onPress={() => router.push('/signup')}>
+        <Text style={styles.link}>Don&apos;t have an account? Sign Up</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity onPress={() => router.push('/(tabs)')}>
         <Text style={styles.link}>Continue as guest</Text>
       </TouchableOpacity>
