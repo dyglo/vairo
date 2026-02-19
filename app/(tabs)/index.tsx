@@ -1,7 +1,6 @@
 import React from 'react';
-import { View, FlatList, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { View, FlatList, StyleSheet, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Smile } from 'lucide-react-native';
 import { useApp } from '@/context/AppContext';
 import { StoriesRow } from '@/components/StoriesRow';
 import { PostCard } from '@/components/PostCard';
@@ -17,9 +16,6 @@ export default function FeedScreen() {
     <>
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <Text style={styles.headerTitle}>Vairo</Text>
-        <TouchableOpacity style={styles.headerBtn}>
-          <Smile size={24} color="#1a1a1a" />
-        </TouchableOpacity>
       </View>
       <StoriesRow />
     </>
@@ -47,7 +43,6 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingBottom: 12,
     backgroundColor: '#fff',
@@ -56,9 +51,6 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
     color: '#1a1a1a',
-  },
-  headerBtn: {
-    padding: 4,
   },
   listContent: {
     paddingBottom: 20,

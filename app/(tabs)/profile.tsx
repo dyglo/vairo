@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import { View, ScrollView, StyleSheet, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '@/context/AppContext';
 import { ProfileHeader } from '@/components/ProfileHeader';
@@ -25,6 +25,21 @@ export default function ProfileScreen() {
         return mediaPosts;
     }
   };
+
+  if (!currentUser) {
+    return (
+      <View style={styles.container}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingTop: insets.top }}
+        >
+          <View style={{ padding: 16, alignItems: 'center', marginTop: 40 }}>
+            <Text style={{ fontSize: 16, color: '#666' }}>Loading profile...</Text>
+          </View>
+        </ScrollView>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>

@@ -27,11 +27,13 @@ export function StoriesRow() {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        <StoryAvatar
-          user={currentUser}
-          isCurrentUser
-          onPress={handleCurrentUserPress}
-        />
+        {currentUser && (
+          <StoryAvatar
+            user={currentUser}
+            isCurrentUser
+            onPress={handleCurrentUserPress}
+          />
+        )}
         {rankedUserIds.map(userId => {
           const user = getUser(userId);
           if (!user) return null;

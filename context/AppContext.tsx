@@ -58,6 +58,7 @@ interface AppState {
   seenStories: Set<string>;
   postReactions: Map<string, ReactionType>;
   postComments: Map<string, Comment[]>;
+  unreadMessages: Map<string, number>;
 }
 
 interface AppContextType extends AppState {
@@ -74,6 +75,9 @@ interface AppContextType extends AppState {
   getUserStories: (userId: string) => Story[];
   hasUnseenStories: (userId: string) => boolean;
   currentUser: User | null;
+  markMessagesAsRead: (userId: string) => void;
+  getUnreadMessagesCount: () => number;
+  addUnreadMessage: (userId: string, count: number) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -88,6 +92,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [seenStories, setSeenStories] = useState<Set<string>>(new Set());
   const [postReactions, setPostReactions] = useState<Map<string, ReactionType>>(new Map());
   const [postComments, setPostComments] = useState<Map<string, Comment[]>>(new Map());
+  const [unreadMessages, setUnreadMessages] = useState<Map<string, number>>(new Map([['1', 2]]));
 
   const toggleLike = useCallback((postId: string, reactionType: ReactionType = 'heart') => {
     const wasLiked = likedPosts.has(postId);
@@ -203,6 +208,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return userStories.some(s => !seenStories.has(s.id));
   }, [stories, seenStories]);
 
+  const markMessagesAsRead = useCallback((userId: string) => {
+    setUnreadMessages(prev => {
+      const next = new Map(prev);
+      next.delete(userId);
+      return next;
+    });
+  }, []);
+
+  const getUnreadMessagesCount = useCallback((): number => {
+    let total = 0;
+    unreadMessages.forEach(count => {
+      total += count;
+    });
+    return total;
+  }, [unreadMessages]);
+
+  const addUnreadMessage = useCallback((userId: string, count: number) => {
+    setUnreadMessages(prev => {
+      const next = new Map(prev);
+      const current = next.get(userId) || 0;
+      next.set(userId, current + count);
+      return next;
+    });
+  }, []);
+
   const value: AppContextType = {
     users,
     posts,
@@ -213,6 +243,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     seenStories,
     postReactions,
     postComments,
+    unreadMessages,
     toggleLike,
     toggleFollow,
     markStorySeen,
@@ -225,6 +256,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     getUser,
     getUserStories,
     hasUnseenStories,
+    markMessagesAsRead,
+    getUnreadMessagesCount,
+    addUnreadMessage,
   };
 
   return (

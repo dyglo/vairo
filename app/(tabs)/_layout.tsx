@@ -1,23 +1,41 @@
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import { Tabs } from 'expo-router';
-import { Home, Search, Bell, User, Plus } from 'lucide-react-native';
+import { Home, Search, Bell, User, Plus, MessageCircle, Film } from 'lucide-react-native';
+import { useApp } from '@/context/AppContext';
 
-function TabBarIcon({ name, color, focused }: { name: string; color: string; focused: boolean }) {
+function TabBarIcon({ name, color, focused, badgeCount }: { name: string; color: string; focused: boolean; badgeCount?: number }) {
   const iconSize = 24;
 
-  switch (name) {
-    case 'home':
-      return <Home size={iconSize} color={color} fill={focused ? color : 'transparent'} />;
-    case 'search':
-      return <Search size={iconSize} color={color} />;
-    case 'notifications':
-      return <Bell size={iconSize} color={color} fill={focused ? color : 'transparent'} />;
-    case 'profile':
-      return <User size={iconSize} color={color} fill={focused ? color : 'transparent'} />;
-    default:
-      return null;
-  }
+  const iconComponent = (() => {
+    switch (name) {
+      case 'home':
+        return <Home size={iconSize} color={color} fill={focused ? color : 'transparent'} />;
+      case 'search':
+        return <Search size={iconSize} color={color} />;
+      case 'messages':
+        return <MessageCircle size={iconSize} color={color} fill={focused ? color : 'transparent'} />;
+      case 'reel':
+        return <Film size={iconSize} color={color} fill={focused ? color : 'transparent'} />;
+      case 'notifications':
+        return <Bell size={iconSize} color={color} fill={focused ? color : 'transparent'} />;
+      case 'profile':
+        return <User size={iconSize} color={color} fill={focused ? color : 'transparent'} />;
+      default:
+        return null;
+    }
+  })();
+
+  return (
+    <View style={styles.iconContainer}>
+      {iconComponent}
+      {badgeCount !== undefined && badgeCount > 0 && (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>{badgeCount > 9 ? '9+' : badgeCount}</Text>
+        </View>
+      )}
+    </View>
+  );
 }
 
 function CreateButton() {
@@ -31,6 +49,9 @@ function CreateButton() {
 }
 
 export default function TabLayout() {
+  const { getUnreadMessagesCount } = useApp();
+  const unreadCount = getUnreadMessagesCount();
+
   return (
     <Tabs
       screenOptions={{
@@ -60,6 +81,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="reel"
+        options={{
+          title: 'Reels',
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name="reel" color={color} focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="create"
         options={{
           title: 'Create',
@@ -69,6 +99,15 @@ export default function TabLayout() {
           tabPress: (e) => {
             e.preventDefault();
           },
+        }}
+      />
+      <Tabs.Screen
+        name="messages"
+        options={{
+          title: 'Messages',
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name="messages" color={color} focused={focused} badgeCount={unreadCount} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -101,6 +140,30 @@ const styles = StyleSheet.create({
     height: 60,
     paddingBottom: 6,
     paddingTop: 6,
+  },
+  iconContainer: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -8,
+    backgroundColor: '#FF4D4D',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '700',
+    paddingHorizontal: 4,
   },
   createButtonContainer: {
     position: 'absolute',
