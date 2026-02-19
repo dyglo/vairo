@@ -186,12 +186,70 @@ export function AppProvider({ children }: { children: ReactNode }) {
                   created_at: new Date().toISOString(),
                 });
               } else {
-                await authAPI.verifyToken();
+                const userData = await authAPI.verifyToken();
                 console.log('✓ Auth token verified, session restored');
+
+                // Restore auth state
+                setAuth({
+                  userId: userData.userId,
+                  email: userData.email,
+                  role: userData.role as UserRole,
+                  accessToken: storedToken,
+                  expiresIn: 3600, // Default to 1 hour
+                });
+
+                // Restore currentUser state
+                setCurrentUser({
+                  id: userData.userId,
+                  email: userData.email,
+                  name: userData.email.split('@')[0],
+                  username: userData.email.split('@')[0],
+                  avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop',
+                  bio: 'Session restored',
+                  location: 'Unknown',
+                  occupation: 'User',
+                  role: userData.role as UserRole,
+                  followers_count: 0,
+                  following_count: 0,
+                  posts_count: 0,
+                  likes_count: 0,
+                  visibility_score: 50,
+                  recent_impressions: 0,
+                  created_at: new Date().toISOString(),
+                });
               }
             } else {
-              await authAPI.verifyToken();
+              const userData = await authAPI.verifyToken();
               console.log('✓ Auth token verified, session restored');
+
+              // Restore auth state
+              setAuth({
+                userId: userData.userId,
+                email: userData.email,
+                role: userData.role as UserRole,
+                accessToken: storedToken,
+                expiresIn: 3600,
+              });
+
+              // Restore currentUser state
+              setCurrentUser({
+                id: userData.userId,
+                email: userData.email,
+                name: userData.email.split('@')[0],
+                username: userData.email.split('@')[0],
+                avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop',
+                bio: 'Session restored',
+                location: 'Unknown',
+                occupation: 'User',
+                role: userData.role as UserRole,
+                followers_count: 0,
+                following_count: 0,
+                posts_count: 0,
+                likes_count: 0,
+                visibility_score: 50,
+                recent_impressions: 0,
+                created_at: new Date().toISOString(),
+              });
             }
           } catch (error) {
             console.warn('Auth session restoration failed, clearing');
