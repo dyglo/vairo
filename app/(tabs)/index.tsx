@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, FlatList, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Smile } from 'lucide-react-native';
+import { Bell, Plus } from 'lucide-react-native';
 import { useApp } from '@/context/AppContext';
 import { StoriesRow } from '@/components/StoriesRow';
 import { PostCard } from '@/components/PostCard';
@@ -16,10 +16,20 @@ export default function FeedScreen() {
   const renderHeader = () => (
     <>
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity style={styles.createBtn}>
+            <Plus size={28} color="#1a1a1a" strokeWidth={2.5} />
+          </TouchableOpacity>
+        </View>
         <Text style={styles.headerTitle}>Vairo</Text>
-        <TouchableOpacity style={styles.headerBtn}>
-          <Smile size={24} color="#1a1a1a" />
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          <TouchableOpacity style={styles.notificationBtn}>
+            <Bell size={24} color="#1a1a1a" />
+            <View style={styles.notificationBadge}>
+              <Text style={styles.badgeText}>3</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
       </View>
       <StoriesRow />
     </>
@@ -47,7 +57,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     paddingHorizontal: 20,
     paddingBottom: 12,
     backgroundColor: '#fff',
@@ -59,6 +69,37 @@ const styles = StyleSheet.create({
   },
   headerBtn: {
     padding: 4,
+  },
+  headerLeft: {
+    flex: 1,
+    alignItems: 'flex-start',
+  },
+  createBtn: {
+    padding: 8,
+  },
+  headerRight: {
+    flex: 1,
+    alignItems: 'flex-end',
+  },
+  notificationBtn: {
+    padding: 8,
+    position: 'relative',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: '#FF6B6B',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
   },
   listContent: {
     paddingBottom: 20,
