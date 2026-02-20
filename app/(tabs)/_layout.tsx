@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import { Tabs } from 'expo-router';
-import { Home, Search, Bell, User, Plus, Film, Circle } from 'lucide-react-native';
+import { Home, Search, Bell, User, Plus, Play, Circle } from 'lucide-react-native';
 
 function TabBarIcon({ name, color, focused }: { name: string; color: string; focused: boolean }) {
   const iconSize = 24;
@@ -12,7 +12,11 @@ function TabBarIcon({ name, color, focused }: { name: string; color: string; foc
     case 'search':
       return <Search size={iconSize} color={color} />;
     case 'reels':
-      return <Film size={iconSize} color={color} fill={focused ? color : 'transparent'} />;
+      return (
+        <View style={[styles.reelsIconContainer, { borderColor: color }]}>
+          <Play size={16} color={color} fill={color} />
+        </View>
+      );
     case 'notifications':
       return <Bell size={iconSize} color={color} fill={focused ? color : 'transparent'} />;
     case 'profile':
@@ -174,5 +178,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 6,
     elevation: 4,
+  },
+  reelsIconContainer: {
+    width: 24,
+    height: 24,
+    borderWidth: 1.5,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
