@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import { Tabs } from 'expo-router';
-import { Home, Search, Bell, User, Plus } from 'lucide-react-native';
+import { Home, Search, Bell, User, Plus, Film, Circle } from 'lucide-react-native';
 
 function TabBarIcon({ name, color, focused }: { name: string; color: string; focused: boolean }) {
   const iconSize = 24;
@@ -11,6 +11,8 @@ function TabBarIcon({ name, color, focused }: { name: string; color: string; foc
       return <Home size={iconSize} color={color} fill={focused ? color : 'transparent'} />;
     case 'search':
       return <Search size={iconSize} color={color} />;
+    case 'reels':
+      return <Film size={iconSize} color={color} fill={focused ? color : 'transparent'} />;
     case 'notifications':
       return <Bell size={iconSize} color={color} fill={focused ? color : 'transparent'} />;
     case 'profile':
@@ -18,6 +20,17 @@ function TabBarIcon({ name, color, focused }: { name: string; color: string; foc
     default:
       return null;
   }
+}
+
+function MessagesBadge({ color, focused }: { color: string; focused: boolean }) {
+  return (
+    <View style={styles.messagesContainer}>
+      <Circle size={24} color={color} fill={focused ? color : 'transparent'} />
+      <View style={styles.badge}>
+        <Text style={styles.badgeText}>5</Text>
+      </View>
+    </View>
+  );
 }
 
 function CreateButton() {
@@ -60,6 +73,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="reels"
+        options={{
+          title: 'Reels',
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name="reels" color={color} focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="create"
         options={{
           title: 'Create',
@@ -69,6 +91,15 @@ export default function TabLayout() {
           tabPress: (e) => {
             e.preventDefault();
           },
+        }}
+      />
+      <Tabs.Screen
+        name="messages"
+        options={{
+          title: 'Messages',
+          tabBarIcon: ({ color, focused }) => (
+            <MessagesBadge color={color} focused={focused} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -107,6 +138,29 @@ const styles = StyleSheet.create({
     bottom: 6,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  messagesContainer: {
+    position: 'relative',
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badge: {
+    position: 'absolute',
+    top: -6,
+    right: -8,
+    backgroundColor: '#ff0000',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   createButton: {
     width: 52,
