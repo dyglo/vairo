@@ -7,9 +7,10 @@ import { useApp } from '@/context/AppContext';
 interface ProfileHeaderProps {
   user: any;
   isCurrentUser?: boolean;
+  onSettingsPress?: () => void;
 }
 
-export function ProfileHeader({ user, isCurrentUser = false }: ProfileHeaderProps) {
+export function ProfileHeader({ user, isCurrentUser = false, onSettingsPress }: ProfileHeaderProps) {
   const { isFollowing, toggleFollow } = useApp();
   const following = isFollowing(user.id);
 
@@ -25,7 +26,7 @@ export function ProfileHeader({ user, isCurrentUser = false }: ProfileHeaderProp
         </View>
         <View style={styles.rightSection}>
           {isCurrentUser ? (
-            <TouchableOpacity style={styles.settingsBtn}>
+            <TouchableOpacity style={styles.settingsBtn} onPress={onSettingsPress}>
               <Settings size={22} color="#333" />
             </TouchableOpacity>
           ) : (
