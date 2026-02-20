@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { User, Mail, Phone, MapPin, Lock, Eye, ChevronDown, Circle } from 'lucide-react-native';
+import { User, Mail, Phone, Lock, Eye, ChevronDown, Circle } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
@@ -18,9 +18,6 @@ export default function SignupScreen() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone] = useState('');
-  const [address] = useState('');
-  const [country] = useState('');
-  const [state] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -99,40 +96,6 @@ export default function SignupScreen() {
             placeholder="Phone Number"
             placeholderTextColor="#9E9E9E"
             value={phone}
-            editable={false}
-          />
-        </View>
-
-        <View style={styles.row}>
-          <View style={[styles.inputWrap, styles.half]}>
-            <TextInput
-              style={styles.input}
-              placeholder="Country"
-              placeholderTextColor="#9E9E9E"
-              value={country}
-              editable={false}
-            />
-            <ChevronDown size={16} color="#8A8A8A" />
-          </View>
-          <View style={[styles.inputWrap, styles.half]}>
-            <TextInput
-              style={styles.input}
-              placeholder="State"
-              placeholderTextColor="#9E9E9E"
-              value={state}
-              editable={false}
-            />
-            <ChevronDown size={16} color="#8A8A8A" />
-          </View>
-        </View>
-
-        <View style={styles.inputWrap}>
-          <MapPin size={16} color="#8A8A8A" />
-          <TextInput
-            style={styles.input}
-            placeholder="Home Address"
-            placeholderTextColor="#9E9E9E"
-            value={address}
             editable={false}
           />
         </View>
