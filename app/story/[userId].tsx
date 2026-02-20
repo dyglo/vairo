@@ -39,6 +39,17 @@ export default function StoryViewerScreen() {
   const storyUser = currentUserStories ? getUser(currentUserStories.user_id) : null;
   const following = storyUser ? isFollowing(storyUser.id) : false;
 
+  const goToNextStory = useCallback(() => {
+    if (currentStoryIndex < (currentUserStories?.stories.length || 0) - 1) {
+      setCurrentStoryIndex(prev => prev + 1);
+    } else if (currentUserIndex < groupedStories.length - 1) {
+      setCurrentUserIndex(prev => prev + 1);
+      setCurrentStoryIndex(0);
+    } else {
+      router.back();
+    }
+  }, [currentStoryIndex, currentUserStories?.stories.length, currentUserIndex, groupedStories.length, router]);
+
   const startProgress = useCallback(() => {
     progressAnim.setValue(0);
     animationRef.current = Animated.timing(progressAnim, {
@@ -51,7 +62,7 @@ export default function StoryViewerScreen() {
         goToNextStory();
       }
     });
-  }, [currentStoryIndex, currentUserIndex]);
+  }, [goToNextStory, progressAnim]);
 
   const stopProgress = useCallback(() => {
     if (animationRef.current) {
@@ -65,18 +76,7 @@ export default function StoryViewerScreen() {
       startProgress();
     }
     return () => stopProgress();
-  }, [currentStory?.id, startProgress, stopProgress]);
-
-  const goToNextStory = () => {
-    if (currentStoryIndex < (currentUserStories?.stories.length || 0) - 1) {
-      setCurrentStoryIndex(prev => prev + 1);
-    } else if (currentUserIndex < groupedStories.length - 1) {
-      setCurrentUserIndex(prev => prev + 1);
-      setCurrentStoryIndex(0);
-    } else {
-      router.back();
-    }
-  };
+  }, [currentStory, markStorySeen, startProgress, stopProgress]);
 
   const goToPreviousStory = () => {
     if (currentStoryIndex > 0) {
