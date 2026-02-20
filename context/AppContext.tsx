@@ -1,7 +1,4 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
-import { envValidator } from '@/utils/envValidator';
-import { authAPI } from '@/utils/authAPI';
-import { apiClient } from '@/utils/apiClient';
 import { storage } from '@/utils/storage';
 
 export type UserRole = 'user' | 'moderator' | 'admin';
@@ -119,152 +116,54 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [postReactions, setPostReactions] = useState<Map<string, ReactionType>>(new Map());
   const [postComments, setPostComments] = useState<Map<string, Comment[]>>(new Map());
 
-  // Validate environment variables and restore auth state on app startup
+  // Restore mock authentication state on app startup
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        // 1. Validate environment variables
-        envValidator.validate();
-        console.log('✓ Environment variables validated successfully');
-
-        // 2. Set up API client unauthorized handler
-        // When a 401 error occurs, try to refresh the token
-        apiClient.setUnauthorizedHandler(async () => {
-          try {
-            const response = await authAPI.refreshToken();
-            await storage.setItem('accessToken', response.accessToken);
-            setAuth(prev => {
-              if (!prev) return null;
-              return { ...prev, accessToken: response.accessToken, expiresIn: response.expiresIn };
-            });
-          } catch (error) {
-            console.error('Token refresh failed:', error);
-            // Clear auth on refresh failure
-            setAuth(null);
-            await storage.removeItem('accessToken');
-            throw error;
-          }
-        });
-
-        // 3. Restore authentication state from storage
+        // Restore authentication state from storage
         const storedToken = await storage.getItem('accessToken');
         if (storedToken) {
-          try {
-            // In dev mode, we might not have a working backend yet
-            // If verification fails, we can either clear the token or just keep it
-            if (__DEV__) {
-              // For mock purposes, if token starts with 'mock-', just accept it
-              if (storedToken.startsWith('mock-')) {
-                console.log('✓ Mock session restored from storage');
-                // We'll restore the full auth state from the token parts if needed
-                // For now, let's just pretend it's valid
-                setAuth({
-                  userId: 'dev-user-id',
-                  email: 'dev@example.com',
-                  role: 'admin',
-                  accessToken: storedToken,
-                  expiresIn: 3600,
-                });
+          if (storedToken.startsWith('mock-')) {
+            console.log('✓ Mock session restored from storage');
 
-                // Also restore currentUser in dev mode
-                setCurrentUser({
-                  id: 'dev-user-id',
-                  email: 'dev@example.com',
-                  name: 'Developer',
-                  username: 'developer',
-                  avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop',
-                  bio: 'I build cool things',
-                  location: 'San Francisco, CA',
-                  occupation: 'Software Engineer',
-                  role: 'admin',
-                  followers_count: 1250,
-                  following_count: 450,
-                  posts_count: 42,
-                  likes_count: 8500,
-                  visibility_score: 95,
-                  recent_impressions: 15400,
-                  created_at: new Date().toISOString(),
-                });
-              } else {
-                const userData = await authAPI.verifyToken();
-                console.log('✓ Auth token verified, session restored');
+            setAuth({
+              userId: 'dev-user-id',
+              email: 'dev@example.com',
+              role: 'admin',
+              accessToken: storedToken,
+              expiresIn: 3600,
+            });
 
-                // Restore auth state
-                setAuth({
-                  userId: userData.userId,
-                  email: userData.email,
-                  role: userData.role as UserRole,
-                  accessToken: storedToken,
-                  expiresIn: 3600, // Default to 1 hour
-                });
-
-                // Restore currentUser state
-                setCurrentUser({
-                  id: userData.userId,
-                  email: userData.email,
-                  name: userData.email.split('@')[0],
-                  username: userData.email.split('@')[0],
-                  avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop',
-                  bio: 'Session restored',
-                  location: 'Unknown',
-                  occupation: 'User',
-                  role: userData.role as UserRole,
-                  followers_count: 0,
-                  following_count: 0,
-                  posts_count: 0,
-                  likes_count: 0,
-                  visibility_score: 50,
-                  recent_impressions: 0,
-                  created_at: new Date().toISOString(),
-                });
-              }
-            } else {
-              const userData = await authAPI.verifyToken();
-              console.log('✓ Auth token verified, session restored');
-
-              // Restore auth state
-              setAuth({
-                userId: userData.userId,
-                email: userData.email,
-                role: userData.role as UserRole,
-                accessToken: storedToken,
-                expiresIn: 3600,
-              });
-
-              // Restore currentUser state
-              setCurrentUser({
-                id: userData.userId,
-                email: userData.email,
-                name: userData.email.split('@')[0],
-                username: userData.email.split('@')[0],
-                avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop',
-                bio: 'Session restored',
-                location: 'Unknown',
-                occupation: 'User',
-                role: userData.role as UserRole,
-                followers_count: 0,
-                following_count: 0,
-                posts_count: 0,
-                likes_count: 0,
-                visibility_score: 50,
-                recent_impressions: 0,
-                created_at: new Date().toISOString(),
-              });
-            }
-          } catch (error) {
-            console.warn('Auth session restoration failed, clearing');
+            setCurrentUser({
+              id: 'dev-user-id',
+              email: 'dev@example.com',
+              name: 'Developer',
+              username: 'developer',
+              avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop',
+              bio: 'I build cool things',
+              location: 'San Francisco, CA',
+              occupation: 'Software Engineer',
+              role: 'admin',
+              followers_count: 1250,
+              following_count: 450,
+              posts_count: 42,
+              likes_count: 8500,
+              visibility_score: 95,
+              recent_impressions: 15400,
+              created_at: new Date().toISOString(),
+            });
+          } else {
+            // Clear stale tokens from previous real-auth attempts.
             await storage.removeItem('accessToken');
+            setAuth(null);
+            setCurrentUser(null);
           }
         }
       } catch (error) {
-        console.error('✗ Environment validation failed:', error);
-        // In a production app, you might show an error screen or disable certain features
-        // For now, we're logging the error
-        if (__DEV__) {
-          console.warn(
-            'Development mode: Some features may not work without proper environment configuration'
-          );
-        }
+        console.error('Failed to restore mock auth session:', error);
+        await storage.removeItem('accessToken');
+        setAuth(null);
+        setCurrentUser(null);
       }
     };
 
@@ -334,14 +233,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const createPost = useCallback(
     (caption: string, type: 'text' | 'image' | 'video', mediaUrl?: string) => {
-      // Validate that required environment variables are configured
-      try {
-        envValidator.validate();
-      } catch (error) {
-        console.error('Cannot create post: Environment validation failed', error);
-        return;
-      }
-
       const newPost: Post = {
         id: `post-${Date.now()}`,
         user_id: currentUser?.id || 'current-user',
@@ -468,11 +359,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
-      // Call backend logout endpoint if auth exists
-      if (auth?.accessToken) {
-        await authAPI.logout();
-      }
-
       // Clear auth state
       setAuth(null);
       setCurrentUser(null);
@@ -486,7 +372,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setCurrentUser(null);
       await storage.removeItem('accessToken');
     }
-  }, [auth?.accessToken]);
+  }, []);
 
   const isAdmin = useCallback(() => {
     return auth?.role === 'admin';

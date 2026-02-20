@@ -1,9 +1,8 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { AppProvider } from '@/context/AppContext';
-import { envValidator } from '@/utils/envValidator';
+import { useAuthMiddleware } from '@/hooks/useAuthMiddleware';
 
 /**
  * Root layout with auth-aware routing
@@ -11,19 +10,14 @@ import { envValidator } from '@/utils/envValidator';
  */
 function RootLayoutNav() {
   useFrameworkReady();
+  const { isLoading } = useAuthMiddleware();
 
-  // Validate environment variables on app startup
-  useEffect(() => {
-    try {
-      envValidator.validate();
-      console.log('✓ Environment variables validated at app startup');
-    } catch (error) {
-      console.error('✗ Environment configuration error:', error);
-    }
-  }, []);
+  if (isLoading) {
+    return null;
+  }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack initialRouteName="login" screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen
         name="story/[userId]"
