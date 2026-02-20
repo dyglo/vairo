@@ -1,13 +1,19 @@
-/**
- * Login Screen - User authentication
- * 
- * Allows users to log in with email and password
- */
-
 import React, { useState } from 'react';
-import { View, TextInput, TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { Mail, Lock, Eye, Circle } from 'lucide-react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -38,98 +44,241 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Welcome Back</Text>
-
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        editable={!loading}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        editable={!loading}
-      />
-
-      <TouchableOpacity
-        style={[styles.button, loading && styles.buttonDisabled]}
-        onPress={handleLogin}
-        disabled={loading}
+    <KeyboardAvoidingView
+      style={styles.screen}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <StatusBar style="dark" backgroundColor="#FFFFFF" />
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Login</Text>
-        )}
-      </TouchableOpacity>
+        <Text style={styles.brand}>Vairo</Text>
+        <Text style={styles.title}>Sign In</Text>
+        <Text style={styles.subtitle}>Please provide the details below to log in</Text>
 
-      <TouchableOpacity onPress={() => router.push('/signup')}>
-        <Text style={styles.link}>Don&apos;t have an account? Sign Up</Text>
-      </TouchableOpacity>
+        {error ? <Text style={styles.error}>{error}</Text> : null}
 
-      <TouchableOpacity onPress={() => router.push('/(tabs)')}>
-        <Text style={styles.link}>Continue as guest</Text>
-      </TouchableOpacity>
-    </View>
+        <View style={styles.inputWrap}>
+          <Mail size={16} color="#8A8A8A" />
+          <TextInput
+            style={styles.input}
+            placeholder="Enter your email"
+            placeholderTextColor="#9E9E9E"
+            value={email}
+            onChangeText={setEmail}
+            editable={!loading}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+        </View>
+
+        <View style={styles.inputWrap}>
+          <Lock size={16} color="#8A8A8A" />
+          <TextInput
+            style={styles.input}
+            placeholder="Enter your password"
+            placeholderTextColor="#9E9E9E"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            editable={!loading}
+          />
+          <Eye size={16} color="#8A8A8A" />
+        </View>
+
+        <View style={styles.metaRow}>
+          <View style={styles.rememberRow}>
+            <Circle size={14} color="#8A8A8A" />
+            <Text style={styles.rememberText}>Remember me</Text>
+          </View>
+          <TouchableOpacity>
+            <Text style={styles.forgotText}>Forget Password?</Text>
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity
+          style={[styles.primaryButton, loading && styles.buttonDisabled]}
+          onPress={handleLogin}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#1A1A1A" />
+          ) : (
+            <Text style={styles.primaryButtonText}>Log In</Text>
+          )}
+        </TouchableOpacity>
+
+        <View style={styles.dividerRow}>
+          <View style={styles.divider} />
+          <Text style={styles.dividerText}>Or Continue With</Text>
+          <View style={styles.divider} />
+        </View>
+
+        <View style={styles.oauthRow}>
+          <TouchableOpacity style={styles.oauthButton}>
+            <Text style={styles.oauthButtonText}>Google</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.oauthButton}>
+            <Text style={styles.oauthButtonText}>Apple</Text>
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity onPress={() => router.push('/signup')}>
+          <Text style={styles.bottomLink}>
+            Don&apos;t have an account? <Text style={styles.bottomLinkAccent}>Sign up</Text>
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => router.push('/(tabs)')}>
+          <Text style={styles.guestLink}>Continue as guest</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
-    backgroundColor: '#fff',
-    padding: 20,
+    backgroundColor: '#FFFFFF',
+  },
+  container: {
+    flexGrow: 1,
     justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+  },
+  brand: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#D89B17',
+    textAlign: 'center',
+    marginBottom: 6,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 30,
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#121212',
     textAlign: 'center',
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 15,
-    fontSize: 16,
+  subtitle: {
+    textAlign: 'center',
+    color: '#6B6B6B',
+    marginTop: 8,
+    marginBottom: 18,
+    fontSize: 13,
   },
-  button: {
-    backgroundColor: '#007AFF',
-    borderRadius: 8,
-    padding: 15,
+  inputWrap: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 10,
+    borderWidth: 1,
+    borderColor: '#E2E2E2',
+    borderRadius: 12,
+    backgroundColor: '#FCFCFC',
+    paddingHorizontal: 12,
+    marginBottom: 10,
+    minHeight: 50,
+  },
+  input: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    fontSize: 16,
+    color: '#1A1A1A',
+  },
+  metaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 2,
+    marginBottom: 14,
+  },
+  rememberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  rememberText: {
+    color: '#6B6B6B',
+    fontSize: 12,
+  },
+  forgotText: {
+    color: '#D89B17',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  primaryButton: {
+    backgroundColor: '#FFBD2E',
+    borderRadius: 12,
+    minHeight: 50,
+    borderWidth: 1,
+    borderColor: '#1A1A1A',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   buttonDisabled: {
     opacity: 0.6,
   },
-  buttonText: {
-    color: '#fff',
+  primaryButtonText: {
+    color: '#1A1A1A',
     fontSize: 16,
+    fontWeight: '700',
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 16,
+    gap: 8,
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E4E4E4',
+  },
+  dividerText: {
+    color: '#7A7A7A',
+    fontSize: 12,
+  },
+  oauthRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  oauthButton: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#E2E2E2',
+    borderRadius: 12,
+    minHeight: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  oauthButtonText: {
+    color: '#1A1A1A',
     fontWeight: '600',
   },
   error: {
-    color: 'red',
-    marginBottom: 15,
+    color: '#B00020',
+    marginBottom: 10,
     textAlign: 'center',
+    fontSize: 12,
   },
-  link: {
-    color: '#007AFF',
+  bottomLink: {
+    color: '#5C5C5C',
     textAlign: 'center',
-    marginTop: 20,
+    marginTop: 18,
     fontSize: 14,
+  },
+  bottomLinkAccent: {
+    color: '#D89B17',
+    fontWeight: '600',
+  },
+  guestLink: {
+    marginTop: 10,
+    color: '#6B6B6B',
+    textAlign: 'center',
+    fontSize: 13,
   },
 });
